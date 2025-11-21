@@ -10,3 +10,39 @@ likelihood:
   dispersion_mode: 'gene'  # Dispersion granularity (only 'gene' supported)
   use_library_size: true   # Whether to include library size in mean
   eps: 1.0e-8              # Numerical stability constant
+
+
+
+prior:
+  # Required parameters
+  latent_dim: 10                # Dimension of latent space z^(0)
+  n_cell_types: 8               # Number of cell types
+  n_batches: 5                  # Number of batches
+  supervised: true              # true: cell-type-specific priors, false: shared prior
+  
+  # Optional parameters (with defaults)
+  cell_type_prior_probs: null   # Prior probabilities π_0 for cell types (null = uniform)
+                                # Example: [0.2, 0.15, 0.15, 0.1, 0.1, 0.1, 0.1, 0.1]
+  
+  batch_prior_probs: null       # Prior probabilities ρ for batches (null = uniform)
+                                # Example: [0.25, 0.2, 0.2, 0.2, 0.15]
+
+# -----------------------------------------------------------------------------
+# Likelihood Module Configuration  
+# -----------------------------------------------------------------------------
+likelihood:
+  # Required parameters
+  latent_dim: 10                # Dimension of latent space z^(0)
+  n_genes: 2000                 # Number of genes (same across all batches)
+  n_batches: 5                  # Number of batches
+  
+  # Optional parameters (with defaults)
+  hidden_dim: 128               # Hidden layer dimension for decoder networks
+  n_layers: 2                   # Number of hidden layers in decoder networks
+  dispersion_mode: 'gene'       # Dispersion granularity (only 'gene' supported)
+  use_library_size: true        # Whether to include library size in mean
+  eps: 1.0e-8                   # Numerical stability constant
+
+
+
+  
