@@ -1,0 +1,12 @@
+likelihood:
+  # Required parameters
+  latent_dim: 10           # Dimension of latent space z^(0)
+  n_genes: 2000            # Number of genes (same across all batches)
+  n_batches: 5             # Number of batches
+  
+  # Optional parameters (with defaults)
+  hidden_dim: 128          # Hidden layer dimension for decoder networks
+  n_layers: 2              # Number of hidden layers in decoder networks
+  dispersion_mode: 'gene'  # Dispersion granularity (only 'gene' supported)
+  use_library_size: true   # Whether to include library size in mean
+  eps: 1.0e-8              # Numerical stability constant
