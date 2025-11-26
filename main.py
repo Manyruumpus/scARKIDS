@@ -360,12 +360,13 @@ def initialize_models(config_manager: ConfigManager):
     logger.info("Initializing DDPM Forward Process...")
     ddpm_forward_config = config_manager.get_config('ddpm_forward')
     ddpm_forward_manager = DDPMForwardManager(ddpm_forward_config)
+    variance_schedule = ddpm_forward_manager.get_schedule()
     logger.info("✓ DDPM Forward initialized")
     
     # 1.6 DDPM Backward
     logger.info("Initializing DDPM Backward Process...")
     ddpm_backward_config = config_manager.get_config('ddpm_backward')
-    ddpm_backward_manager = DDPMBackwardManager(ddpm_backward_config)
+    ddpm_backward_manager = DDPMBackwardManager(ddpm_backward_config, variance_schedule)
     logger.info("✓ DDPM Backward initialized")
     
     # ========================================================================
