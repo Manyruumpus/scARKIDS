@@ -49,3 +49,9 @@ logs/
 .env
 .env.local
 .env.*.local
+
+
+
+# Data files
+data/
+*.h5ad
