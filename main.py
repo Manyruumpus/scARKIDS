@@ -670,10 +670,20 @@ def run_inference(
         batch_target = torch.full_like(batch_new, default_target_batch)
         
         # Run inference
+        # Determine if supervised or unsupervised inference (fetch from config)
+        is_supervised = config_manager.get_config("global").get("supervised", False)
+
+        if is_supervised:
+            # In supervised case, provide cell type labels to inference module
+            cell_type_input = celltype_true
+        else:
+            # In unsupervised case, cell type labels unknown; let model predict
+            cell_type_input = None
+
         outputs = inference_manager.predict(
             x_new=x_new,
             batch_new=batch_new,
-            cell_type_new=None,  # Predict cell types
+            cell_type_new=cell_type_input,  # Correct behavior for both cases
             batch_target=batch_target,
             return_intermediate=True
         )

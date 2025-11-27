@@ -402,6 +402,12 @@ class InferenceModule(nn.Module):
         
         # Step 1: Cell type prediction (if unknown)
         if cell_type_new is None:
+            if self.classifier is None:
+                raise RuntimeError(
+                    "Cell type prediction requested, but no classifier module exists. "
+                    "This typically means you are running in supervised mode, "
+                    "so cell type labels must be provided for inference."
+                )
             logger.info("Cell type unknown, predicting...")
             cell_type_pred, cell_type_probs = self.predict_cell_type(x_new, batch_new)
         else:
