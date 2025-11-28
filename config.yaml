@@ -1,292 +1,268 @@
 # ============================================================================
-# scARKIDS Configuration File
+# scARKIDS Configuration File - Session 1 (Supervised Initialization)
 # ============================================================================
-# This is the single source of configuration for the entire VAE-DDPM pipeline.
-#
-# Configuration Structure:
-# 1. Global parameters (shared across multiple modules)
-# 2. Data parameters (dataset-specific)
-# 3. Module-specific parameters (override globals if needed)
-# 4. Training/Inference parameters
-#
-# Note: Common parameters are defined in 'global' section and automatically
-# inherited by all modules. Module-specific sections can override these.
+# This configuration is optimized for:
+# - Supervised learning (cell types known)
+# - First training session (model initialization)
+# - ~1 hour training time on GPU (batch_size=256, n_epochs=40)
+# - Well-curated dataset with high-quality labels
 # ============================================================================
+
 
 # ============================================================================
 # Global Parameters (Shared Across Modules)
 # ============================================================================
 global:
-  # Core dimensions
-  latent_dim: 20                    # Dimension of latent space z^(0)
-  n_diffusion_steps: 400          # Number of diffusion timesteps T
+  # Core dimensions (UNTUNABLE - architecture-critical)
+  latent_dim: 20                    # Latent space dimension (moderate)
+  n_diffusion_steps: 400            # Diffusion timesteps (standard)
   
-  # Data dimensions (inferred from dataset or specified)
-  n_genes: 2000                    # Number of genes (same across all batches - anchor genes)
-  n_batches: 4                     # Number of batches B
-  n_cell_types: 13                  # Number of cell types C
+  # Data dimensions (determined by dataset)
+  n_genes: 2000                     # Anchor genes (adjust to your dataset)
+  n_batches: 8                      # Number of batches (adjust to your dataset)
+  n_cell_types: 20                  # Cell types (adjust to your dataset)
   
   # Model mode
-  supervised: true                # true: c* known, false: c inferred
+  supervised: true                  # Session 1: SUPERVISED (cell types known)
   
   # Numerical stability
-  eps: 1.0e-8                      # Small constant for numerical stability
+  eps: 1.0e-8                       # Small constant (keep fixed)
   
-  # Regularization (can be overridden per module)
-  dropout: 0.1                     # Default dropout rate
-  use_batch_norm: true             # Use batch normalization by default
+  # Regularization
+  dropout: 0.1                      # Light dropout for initialization
+  use_batch_norm: true              # Batch norm (better than layer norm)
+
 
 # ============================================================================
 # Data Configuration
 # ============================================================================
 data:
-  # Dataset paths
-  train_data_path: "./data/lungs_train_supervised.h5ad"
-  val_data_path: "./data/lungs_val_supervised.h5ad"
-  test_data_path: "./data/lungs_test_supervised.h5ad"
+  # Dataset paths (adjust to your data locations)
+  train_data_path: "./data/session3_sup_aortic/HumanAorticData_train.h5ad"
+  val_data_path: "./data/session3_sup_aortic/HumanAorticData_val.h5ad"
+  test_data_path: "./data/session3_sup_aortic/HumanAorticData_test.h5ad"
   
   # Data preprocessing
-  log_transform: true              # Apply log1p transformation
-  normalize: true                  # Normalize by library size
+  log_transform: true               # Log1p transformation (standard)
+  normalize: true                   # Normalize by library size
   
-  # Cell type and batch information
-  cell_type_key: "celltype"       # Key in adata.obs for cell type labels
-  batch_key: "orig.ident"               # Key in adata.obs for batch labels
+  # Cell type and batch information (adjust keys to match your H5AD)
+  cell_type_key: "cell_type"         # Key in adata.obs for cell type labels
+  batch_key: "batch"                # Key in adata.obs for batch labels
   
-  # Optional: Empirical priors (computed from data if not specified)
-  # cell_type_prior_probs: [0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125]  # Uniform
-  # batch_prior_probs: [0.333, 0.333, 0.334]  # Uniform
+  # Optional: Empirical priors (null = compute from data)
+  cell_type_prior_probs: null       # Compute from training data
+  batch_prior_probs: null           # Compute from training data
+
 
 # ============================================================================
 # Module Configurations
 # ============================================================================
 
-# ----------------------------------------------------------------------------
 # Encoder Module (VAE Encoder q_φ)
-# ----------------------------------------------------------------------------
 encoder:
-  # Inherits: latent_dim, n_genes, n_batches, n_cell_types, eps, dropout, use_batch_norm from global
-  
-  # Architecture
-  hidden_dims: [256, 128]          # List of hidden layer dimensions
-  # dropout: 0.1                   # Inherited from global, uncomment to override
-  # use_batch_norm: true           # Inherited from global
-  use_layer_norm: false            # Alternative to batch norm (mutually exclusive)
+  # Architecture (UNTUNABLE - checkpoint-critical)
+  hidden_dims: [256, 128]           # 2 layers, decreasing dims (fast convergence)
+  use_layer_norm: false             # Batch norm preferred
   
   # Input preprocessing
-  input_transform: "log1p"         # Options: 'log1p', 'none'
-  
-  # Numerical stability
-  # eps: 1.0e-8                    # Inherited from global
-
-# ----------------------------------------------------------------------------
-# Classifier Module (Cell Type Classifier q_ω)
-# ----------------------------------------------------------------------------
-classifier:
-  # Inherits: n_genes, n_cell_types, n_batches, use_batch_norm from global
-  
-  # Architecture
-  hidden_dim: 256                  # Hidden layer dimension
-  n_layers: 3                      # Number of hidden layers
-  batch_embed_dim: 32              # Dimension of batch embedding
+  input_transform: "log1p"          # Log1p input preprocessing
   
   # Regularization
-  dropout: 0.2                     # Override global dropout (classifier needs more)
-  # use_batch_norm: true           # Inherited from global
+  dropout: 0.1                      # Inherited from global (light)
+  use_batch_norm: true              # Inherited from global
 
-# ----------------------------------------------------------------------------
-# Likelihood Module (ZINB Decoder p_θ)
-# ----------------------------------------------------------------------------
-likelihood:
-  # Inherits: latent_dim, n_genes, n_batches, eps from global
+
+# Classifier Module (Cell Type Classifier q_ω)
+classifier:
+  # Architecture (UNTUNABLE)
+  hidden_dim: 256                   # Single-sized hidden layers
+  n_layers: 3                       # Moderate depth
+  batch_embed_dim: 32               # Batch embedding dimension
   
-  # Decoder architecture
-  hidden_dim: 128                  # Hidden layer dimension for decoders
-  n_layers: 3                      # Number of hidden layers
+  # Regularization (slightly higher than encoder)
+  dropout: 0.2                      # Extra regularization for classifier
+
+
+# Likelihood Module (ZINB Decoder p_θ)
+likelihood:
+  # Decoder architecture (UNTUNABLE)
+  hidden_dim: 128                   # Moderate size
+  n_layers: 3                       # Match encoder depth
   
   # ZINB parameters
-  dispersion_mode: "gene"          # Options: 'gene' (gene-specific θ_g)
-  use_library_size: true           # Include log(s_bn) in mean parameterization
-  
-  # Numerical stability
-  # eps: 1.0e-8                    # Inherited from global
+  dispersion_mode: "gene"           # Gene-specific dispersion
+  use_library_size: true            # Include library size
 
-# ----------------------------------------------------------------------------
+
 # Prior Module (p(z^(0)|c), p(c), p(z^(T)))
-# ----------------------------------------------------------------------------
 prior:
-  # Inherits: latent_dim, n_cell_types, n_batches, supervised from global
+  # Cell type prior probabilities
+  cell_type_prior_probs: null       # Compute empirically from data
   
-  # Cell type prior probabilities (if not specified, uses uniform)
-  cell_type_prior_probs: null    # null for uniform, or list of probabilities
-  
-  # Batch prior probabilities (if not specified, uses uniform)
-  batch_prior_probs: null        # null for uniform, or list of probabilities
+  # Batch prior probabilities
+  batch_prior_probs: null           # Compute empirically from data
 
-# ----------------------------------------------------------------------------
-# DDPM Forward Process Module (q(z^(t)|z^(t-1)))
-# ----------------------------------------------------------------------------
+
+# DDPM Forward Process Module (diffusion noise schedule)
 ddpm_forward:
-  # Inherits: latent_dim, n_diffusion_steps from global
-  
   # Variance schedule
-  beta_schedule: "cosine"          # Options: 'linear', 'cosine', 'quadratic'
-  beta_min: 1.0e-4                 # Minimum β_t value
-  beta_max: 2.0e-2                 # Maximum β_t value
+  beta_schedule: "cosine"           # Cosine schedule (smoother than linear)
+  beta_min: 1.0e-4                  # Minimum β_t (standard)
+  beta_max: 2.0e-2                  # Maximum β_t (standard)
 
-# ----------------------------------------------------------------------------
-# DDPM Backward Process Module (p_ψ(z^(t-1)|z^(t), c))
-# ----------------------------------------------------------------------------
+
+# DDPM Backward Process Module (reverse denoising p_ψ)
 ddpm_backward:
-  # Inherits: latent_dim, n_diffusion_steps, n_cell_types, dropout from global
+  # Reverse process variance (UNTUNABLE)
+  variance_type: "learned"            # Fixed variance (stable for initialization)
   
-  # Reverse process variance
-  variance_type: "learned"           # Options: 'fixed', 'learned'
+  # Noise prediction network (UNTUNABLE)
+  noise_hidden_dim: 128             # Moderate hidden dimension
+  noise_n_layers: 2                 # Shallow network (fast convergence)
   
-  # Noise prediction network architecture
-  noise_hidden_dim: 128            # Hidden dimension for ε_ψ network
-  noise_n_layers: 2                # Number of layers in ε_ψ network
-  
-  # Embedding dimensions
-  timestep_embed_dim: 64           # Dimension of timestep embedding
-  celltype_embed_dim: 32           # Dimension of cell type embedding
+  # Embedding dimensions (UNTUNABLE)
+  timestep_embed_dim: 64            # Timestep embedding
+  celltype_embed_dim: 32            # Cell type embedding
   
   # Regularization
-  # dropout: 0.1                   # Inherited from global
+  dropout: 0.1                      # Inherited from global
 
-# ----------------------------------------------------------------------------
+
 # Variational Posterior Module (q_φ,ω)
-# ----------------------------------------------------------------------------
-variational_posterior:
-  # Inherits: supervised, latent_dim, n_diffusion_steps, n_cell_types from global
-  # Note: This module orchestrates encoder, classifier, and ddpm_forward
-  # Its configuration is derived from those modules
+# Note: Configuration derived from encoder, classifier, and ddpm_forward
 
-# ----------------------------------------------------------------------------
+
 # ELBO Module (Loss Computation)
-# ----------------------------------------------------------------------------
-elbo:
-  # Inherits: supervised, latent_dim, n_diffusion_steps, n_cell_types from global
-  # Note: This module orchestrates all atomic modules for loss computation
-  # Its configuration is derived from those modules
+# Note: Configuration derived from all atomic modules
+
 
 # ============================================================================
 # Training Configuration
 # ============================================================================
 training:
-  # Inherits: supervised from global
-  
-  # Training loop
-  n_epochs: 40                    # Number of training epochs
-  batch_size: 256                  # Mini-batch size
+  # Training loop (optimized for ~1 hour)
+  n_epochs: 30                      # 40 epochs ≈ 45-60 min on V100/A100
+  batch_size: 256                   # Large batch: stable gradients, ~1000 batches/epoch
   
   # Optimization
-  learning_rate: 1.0e-3            # Initial learning rate
-  weight_decay: 1.0e-5             # L2 regularization coefficient
-  grad_clip_norm: 1.0              # Maximum gradient norm for clipping
+  learning_rate: 1.0e-3             # AdamW default (proven robust)
+  weight_decay: 1.0e-5              # Light L2 regularization
+  grad_clip_norm: 0.5               # Gradient clipping (standard)
   
   # Learning rate scheduling
-  lr_scheduler: "step"           # Options: 'cosine', 'step', 'plateau', null
-  lr_warmup_epochs: 5              # Number of warmup epochs
+  lr_scheduler: "step"              # Step decay (better for short training)
+                                    # Drops LR at epochs 13, 26, 39
+  lr_warmup_epochs: 4               # 6/50 = 12% warmup (standard range)
   
   # Logging and checkpointing
-  log_interval: 10                # Log metrics every N batches
-  checkpoint_interval: 10           # Save checkpoint every N epochs
-  checkpoint_dir: "./checkpoints"  # Directory to save checkpoints
+  log_interval: 10                  # Log every 10 batches
+  checkpoint_interval: 20           # Save checkpoint every 10 epochs (4 total)
+  checkpoint_dir: "./checkpoints"   # Directory for checkpoints
   
   # Hardware
-  device: "cuda"                   # Options: 'cuda', 'cpu', or specific device like 'cuda:0'
-  use_amp: false                   # Use automatic mixed precision (requires CUDA)
+  device: "cuda"                    # GPU required for 1-hour target
+  use_amp: false                    # Disable AMP (stability > speed)
   
-  # Random seed (for reproducibility)
+  # Reproducibility
   seed: 42
 
 
-
+# ============================================================================
+# Session Configuration
+# ===========================================================================
   sessions:
-    # Session 1: First unsupervised dataset (uses initialized model)
-    - name: "unsupervised_dataset_1"
-      data_path: "data/unsupervised_1.h5ad"
-      supervised: false
-      n_epochs: 100
-      resume_from: null  # Use initialized model
-      output_checkpoint: "checkpoints/session_1_best.pt"
+    # # Session 1: First supervised dataset (model initialization)
+    # - name: "supervised_session_1_pancreas"
+    #   data_path: "./data/session1_sup_pan/PancreasData_train.h5ad" #train split path
+    #   supervised: true              # Ground-truth cell types (cell_type, batch)
+    #   n_epochs: 100
+    #   resume_from: null             # Initialize new model
+    #   output_checkpoint: "./checkpoints/session_1_best.pt"
     
-    # Session 2: Second unsupervised dataset (loads Session 1 best)
-    - name: "unsupervised_dataset_2"
-      data_path: "data/unsupervised_2.h5ad"
-      supervised: false
-      n_epochs: 100
-      resume_from: "checkpoints/session_1_best.pt"  # Load Session 1 best
-      output_checkpoint: "checkpoints/session_2_best.pt"
+    # Session 2: First unsupervised dataset (fine-tuning)
+    # - name: "unsupervised_session_2_lungs"
+    #   data_path: "./data/session2_unsup_lungs/LungsData_Train.h5ad"
+    #   supervised: false             # Infer cell types (batch, RUBBISH)
+    #   n_epochs: 100                  # Shorter (fine-tuning)
+    #   resume_from: null  # Load Session 1 best
+    #   output_checkpoint: "./checkpoints/session_2_best.pt"
     
-    # Session 3: First supervised dataset (loads Session 2 best, mode switch)
-    - name: "supervised_dataset_3"
-      data_path: "data/supervised_3.h5ad"
-      supervised: true
-      n_epochs: 120  # Extra epochs for mode adaptation
-      resume_from: "checkpoints/session_2_best.pt"  # Load Session 2 best
-      output_checkpoint: "checkpoints/session_3_best.pt"
+    # # Session 3: Second supervised dataset (supervised fine-tuning)
+    - name: "supervised_session_3_aortic"
+      data_path: "./data/session3_sup_aortic/HumanAorticData_train.h5ad"
+      supervised: true              # Ground-truth cell types again (cell_type, batch)
+      n_epochs: 30                  # Shorter (fine-tuning)
+      resume_from: "./checkpoints/session_1_best.pt"  # Load Session 2 best
+      output_checkpoint: "./checkpoints/session_3_best.pt"
     
-    # Session 4: Second supervised dataset (loads Session 3 best, final refinement)
-    - name: "supervised_dataset_4"
-      data_path: "data/supervised_4.h5ad"
-      supervised: true
-      n_epochs: 100
-      resume_from: "checkpoints/session_3_best.pt"  # Load Session 3 best
-      output_checkpoint: "checkpoints/session_4_best.pt"
+    # # Session 4: Second unsupervised dataset (final refinement)
+    # - name: "unsupervised_session_4"
+    #   data_path: "./data/session4_unsup_new/ImmuneCellData_Train.h5ad"
+    #   supervised: false             # Infer cell types (batch, RUBBISH)
+    #   n_epochs: 50                  # Shorter (fine-tuning)
+    #   resume_from: "./checkpoints/session_2_best.pt"  # Load Session 3 best
+    #   output_checkpoint: "./checkpoints/session_4_best.pt"
+
 
 # ============================================================================
 # Inference Configuration
 # ============================================================================
 inference:
-  # DDPM refinement (optional)
-  use_ddpm_refinement: true       # Whether to apply DDPM refinement
-  n_refinement_steps: 100         # Number of steps (null uses n_diffusion_steps)
+  # DDPM refinement
+  use_ddpm_refinement: true         # Apply diffusion refinement
+  n_refinement_steps: 100           # ~25% of T=400 (balances speed/quality)
   
   # Batch correction
-  default_target_batch: 0          # Default target batch for correction
+  default_target_batch: 0           # Reference batch (adjust as needed)
   
   # Output options
-  save_latent_embeddings: true     # Save z^(0) embeddings
-  save_corrected_expression: true  # Save batch-corrected x̂
-  save_cell_type_predictions: true # Save predicted cell types
+  save_latent_embeddings: true      # Save z^(0) embeddings
+  save_corrected_expression: true   # Save batch-corrected expression
+  save_cell_type_predictions: true  # Save cell type predictions
   
-  # Output paths
+  # Output path
   output_dir: "./results"
 
-# ============================================================================
-# Example: Alternative Configuration for Supervised Mode
-# ============================================================================
-# To switch to supervised mode, change:
-# global:
-#   supervised: true
-#
-# This will automatically configure:
-# - prior: uses cell-type-specific p(z^(0)|c*) with learnable μ_c, Σ_c
-# - variational_posterior: expects c* as input
-# - elbo: computes supervised ELBO
-# - training: requires cell type labels in data
 
 # ============================================================================
-# Configuration Inheritance and Override Rules
+# Notes
 # ============================================================================
-# 1. Parameters in 'global' are automatically inherited by all modules
-# 2. Module-specific parameters override global parameters
-# 3. Required parameters MUST be specified (either globally or per-module)
-# 4. Optional parameters use defaults if not specified
+# 
+# 1. UNTUNABLE PARAMETERS (Architecture-Critical)
+#    These define the model structure and CANNOT change between sessions:
+#    - global.latent_dim
+#    - global.n_diffusion_steps
+#    - encoder.hidden_dims
+#    - classifier.hidden_dim, n_layers, batch_embed_dim
+#    - likelihood.hidden_dim, n_layers
+#    - ddpm_backward.variance_type, noise_hidden_dim, noise_n_layers,
+#      timestep_embed_dim, celltype_embed_dim
+#    - global.use_batch_norm
 #
-# Common parameters that are shared:
-# - latent_dim: encoder, likelihood, prior, ddpm_forward, ddpm_backward, 
-#               variational_posterior, elbo
-# - n_diffusion_steps: ddpm_forward, ddpm_backward, variational_posterior, elbo
-# - n_genes: encoder, classifier, likelihood
-# - n_batches: encoder, classifier, likelihood, prior
-# - n_cell_types: encoder, classifier, prior, ddpm_backward, 
-#                 variational_posterior, elbo
-# - supervised: prior, variational_posterior, elbo, training
-# - dropout: encoder, classifier, ddpm_backward
-# - eps: encoder, likelihood
-# - use_batch_norm: encoder, classifier
+# 2. TUNABLE PARAMETERS (Can adjust between sessions)
+#    - n_epochs
+#    - batch_size
+#    - learning_rate
+#    - lr_scheduler, lr_warmup_epochs
+#    - dropout rates
+#    - weight_decay
+#    - ddpm_forward.beta_schedule parameters
 #
-# This design eliminates redundancy while allowing fine-grained control.
+# 3. SESSION-SPECIFIC PARAMETERS (Must update per session)
+#    - sessions[].name
+#    - sessions[].data_path
+#    - sessions[].supervised
+#    - sessions[].n_epochs (can change)
+#    - sessions[].resume_from (path to previous checkpoint)
+#    - sessions[].output_checkpoint
+#
+# 4. EXPECTED TIMING
+#    - Session 1: 40 epochs × ~1.5 min/epoch ≈ 60 min (initialization)
+#    - Sessions 2-4: 30 epochs × ~1.5 min/epoch ≈ 45 min (fine-tuning)
+#
+# 5. VALIDATION & MONITORING
+#    - Monitor reconstruction loss (NLL) and KL terms
+#    - Check gradient norms and learning rate schedule
+#    - After Session 1, review logs and provide to AI for Session 2 recommendations
+#

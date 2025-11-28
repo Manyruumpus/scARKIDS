@@ -126,7 +126,7 @@ class scRNASeqDataset(Dataset):
 
         # Clip negative values (should not exist in counts, but be safe)
         self.expression = np.clip(self.expression, a_min=0.0, a_max=None)
-        logger.info("✓ Expression matrix sanitized")
+        logger.info("  Expression matrix sanitized")
 
         # Extract batch labels
         if batch_key not in adata.obs.columns:
@@ -171,7 +171,7 @@ class scRNASeqDataset(Dataset):
             logger.warning(f"Found {n_invalid_lib} NaN/Inf values in library sizes. Setting to 0.0.")
             self.library_sizes[invalid_lib_mask] = 0.0
 
-        logger.info("✓ Library sizes computed and sanitized")
+        logger.info("  Library sizes computed and sanitized")
 
         logger.info(f"Dataset initialized:")
         logger.info(f"  n_obs: {len(self)}")
@@ -336,7 +336,7 @@ def create_data_loaders(
             num_workers=num_workers,
             pin_memory=True
         )
-        logger.info(f"✓ Training DataLoader created: {len(train_dataset)} samples")
+        logger.info(f"  Training DataLoader created: {len(train_dataset)} samples")
     else:
         logger.warning(f"Training data not found at {train_path}")
     
@@ -360,7 +360,7 @@ def create_data_loaders(
             num_workers=num_workers,
             pin_memory=True
         )
-        logger.info(f"✓ Validation DataLoader created: {len(val_dataset)} samples")
+        logger.info(f"  Validation DataLoader created: {len(val_dataset)} samples")
     else:
         logger.warning(f"Validation data not found at {val_path}")
     
@@ -384,7 +384,7 @@ def create_data_loaders(
             num_workers=num_workers,
             pin_memory=True
         )
-        logger.info(f"✓ Test DataLoader created: {len(test_dataset)} samples")
+        logger.info(f"  Test DataLoader created: {len(test_dataset)} samples")
     else:
         logger.warning(f"Test data not found at {test_path}")
     
@@ -428,7 +428,7 @@ def initialize_models(config_manager: ConfigManager):
     logger.info("Initializing Encoder...")
     encoder_config = config_manager.get_config('encoder')
     encoder_manager = EncoderManager(encoder_config)
-    logger.info("✓ Encoder initialized")
+    logger.info("  Encoder initialized")
     
     # 1.2 Classifier (required for unsupervised mode)
     classifier_manager = None
@@ -436,7 +436,7 @@ def initialize_models(config_manager: ConfigManager):
         logger.info("Initializing Classifier (unsupervised mode)...")
         classifier_config = config_manager.get_config('classifier')
         classifier_manager = ClassifierManager(classifier_config)
-        logger.info("✓ Classifier initialized")
+        logger.info("  Classifier initialized")
     else:
         logger.info("Classifier skipped (supervised mode)")
     
@@ -444,26 +444,26 @@ def initialize_models(config_manager: ConfigManager):
     logger.info("Initializing Likelihood...")
     likelihood_config = config_manager.get_config('likelihood')
     likelihood_manager = LikelihoodManager(likelihood_config)
-    logger.info("✓ Likelihood initialized")
+    logger.info("  Likelihood initialized")
     
     # 1.4 Prior
     logger.info("Initializing Prior...")
     prior_config = config_manager.get_config('prior')
     prior_manager = PriorManager(prior_config)
-    logger.info("✓ Prior initialized")
+    logger.info("  Prior initialized")
     
     # 1.5 DDPM Forward
     logger.info("Initializing DDPM Forward Process...")
     ddpm_forward_config = config_manager.get_config('ddpm_forward')
     ddpm_forward_manager = DDPMForwardManager(ddpm_forward_config)
     variance_schedule = ddpm_forward_manager.get_schedule()
-    logger.info("✓ DDPM Forward initialized")
+    logger.info("  DDPM Forward initialized")
     
     # 1.6 DDPM Backward
     logger.info("Initializing DDPM Backward Process...")
     ddpm_backward_config = config_manager.get_config('ddpm_backward')
     ddpm_backward_manager = DDPMBackwardManager(ddpm_backward_config, variance_schedule)
-    logger.info("✓ DDPM Backward initialized")
+    logger.info("  DDPM Backward initialized")
     
     # ========================================================================
     # Step 2: Initialize Compound Objects
@@ -481,7 +481,7 @@ def initialize_models(config_manager: ConfigManager):
         classifier_manager=classifier_manager,
         supervised=supervised
     )
-    logger.info("✓ Variational Posterior initialized")
+    logger.info("  Variational Posterior initialized")
     
     # 2.2 ELBO
     logger.info("Initializing ELBO Module...")
@@ -492,7 +492,7 @@ def initialize_models(config_manager: ConfigManager):
         variational_posterior_manager=variational_posterior_manager,
         classifier_manager=classifier_manager
     )
-    logger.info("✓ ELBO Module initialized")
+    logger.info("  ELBO Module initialized")
     
     # ========================================================================
     # Step 3: Initialize Training and Inference Managers
@@ -516,7 +516,7 @@ def initialize_models(config_manager: ConfigManager):
         elbo_manager=elbo_manager,
         classifier_manager=classifier_manager
     )
-    logger.info("✓ Training Manager initialized")
+    logger.info("  Training Manager initialized")
     
     # 3.2 Inference Manager
     logger.info("Initializing Inference Manager...")
@@ -533,7 +533,7 @@ def initialize_models(config_manager: ConfigManager):
         use_ddpm_refinement=inference_config.get('use_ddpm_refinement', False),
         n_refinement_steps=inference_config.get('n_refinement_steps', None)
     )
-    logger.info("✓ Inference Manager initialized")
+    logger.info("  Inference Manager initialized")
     
     logger.info("=" * 80)
     logger.info("All Model Components Initialized Successfully")
@@ -592,7 +592,7 @@ def run_training(
             train_loader=train_loader,
             val_loader=val_loader
         )
-        logger.info("✓ Training completed successfully")
+        logger.info("  Training completed successfully")
     except KeyboardInterrupt:
         logger.info("Training interrupted by user")
     except Exception as e:
@@ -632,7 +632,7 @@ def run_inference(
     # Load trained model
     logger.info(f"Loading checkpoint from {checkpoint_path}")
     training_manager.load_model(checkpoint_path)
-    logger.info("✓ Checkpoint loaded successfully")
+    logger.info("  Checkpoint loaded successfully")
     
     # Get test loader
     test_loader = data_loaders.get('test')
@@ -705,7 +705,7 @@ def run_inference(
         if all_results[key]:
             all_results[key] = np.concatenate(all_results[key], axis=0)
     
-    logger.info("✓ Inference completed successfully")
+    logger.info("  Inference completed successfully")
     
     # Save results
     logger.info("Saving inference results...")
@@ -713,25 +713,25 @@ def run_inference(
     if inference_config.get('save_latent_embeddings', True):
         latent_path = Path(output_dir) / 'latent_embeddings.npy'
         np.save(latent_path, all_results['latent_embeddings'])
-        logger.info(f"✓ Saved latent embeddings to {latent_path}")
+        logger.info(f"  Saved latent embeddings to {latent_path}")
     
     if inference_config.get('save_corrected_expression', True):
         corrected_path = Path(output_dir) / 'corrected_expression.npy'
         np.save(corrected_path, all_results['corrected_expression'])
-        logger.info(f"✓ Saved batch-corrected expression to {corrected_path}")
+        logger.info(f"  Saved batch-corrected expression to {corrected_path}")
     
     if inference_config.get('save_cell_type_predictions', True):
         predictions_path = Path(output_dir) / 'cell_type_predictions.npy'
         np.save(predictions_path, all_results['cell_type_predictions'])
-        logger.info(f"✓ Saved cell type predictions to {predictions_path}")
+        logger.info(f"  Saved cell type predictions to {predictions_path}")
         
-        if all_results['cell_type_probs'].size > 0:
+        if len(all_results['cell_type_probs']) > 0:
             probs_path = Path(output_dir) / 'cell_type_probabilities.npy'
             np.save(probs_path, all_results['cell_type_probs'])
-            logger.info(f"✓ Saved cell type probabilities to {probs_path}")
+            logger.info(f"  Saved cell type probabilities to {probs_path}")
     
     # Compute and log accuracy (if ground truth available)
-    if all_results['true_cell_types'].size > 0:
+    if len(all_results['true_cell_types']) > 0:
         accuracy = (all_results['cell_type_predictions'] == all_results['true_cell_types']).mean()
         logger.info(f"Cell type prediction accuracy: {accuracy * 100:.2f}%")
     
@@ -869,7 +869,7 @@ def run_sequential_training(
             logger.warning(f"Validation metrics will not be computed")
         
         n_train = len(train_loader.dataset)
-        logger.info(f"✓ Loaded {n_train} training samples")
+        logger.info(f"  Loaded {n_train} training samples")
         
         # ====================================================================
         # Step 2.3: Handle Model Initialization or Checkpoint Loading
@@ -887,7 +887,7 @@ def run_sequential_training(
                 logger.info(f"Checkpoint: {resume_from}")
                 try:
                     training_manager.load_model(resume_from)
-                    logger.info(f"✓ Model loaded successfully (warm-start)")
+                    logger.info(f"  Model loaded successfully (warm-start)")
                 except Exception as e:
                     logger.error(f"✗ Failed to load checkpoint: {e}")
                     raise
@@ -941,7 +941,7 @@ def run_sequential_training(
             )
             
             logger.info("-" * 80)
-            logger.info(f"✓ Training completed successfully for session {session_idx}")
+            logger.info(f"  Training completed successfully for session {session_idx}")
             
         except KeyboardInterrupt:
             logger.info("⚠ Training interrupted by user")
@@ -958,7 +958,7 @@ def run_sequential_training(
         
         try:
             training_manager.save_model(output_checkpoint)
-            logger.info(f"✓ Best model saved to: {output_checkpoint}")
+            logger.info(f"  Best model saved to: {output_checkpoint}")
         except Exception as e:
             logger.error(f"✗ Failed to save checkpoint: {e}")
             raise
@@ -974,7 +974,7 @@ def run_sequential_training(
         
         if session_idx < num_sessions:
             next_session = sessions[session_idx]
-            logger.info(f"  Next session ({next_session['name']}) will load this checkpoint ✓")
+            logger.info(f"  Next session ({next_session['name']}) will load this checkpoint  ")
         
         logger.info("=" * 80 + "\n")
     
@@ -983,7 +983,7 @@ def run_sequential_training(
     # ========================================================================
     
     logger.info("=" * 80)
-    logger.info("✓ SEQUENTIAL TRAINING COMPLETED SUCCESSFULLY")
+    logger.info("  SEQUENTIAL TRAINING COMPLETED SUCCESSFULLY")
     logger.info("=" * 80)
     logger.info(f"Trained on {num_sessions} datasets sequentially")
     logger.info(f"Initialization: Fresh model once before Session 1")
@@ -1090,7 +1090,7 @@ def main():
     try:
         config_manager = ConfigManager(args.config)
         config_manager.validate()
-        logger.info("✓ Configuration loaded and validated successfully")
+        logger.info("  Configuration loaded and validated successfully")
     except Exception as e:
         logger.error(f"Configuration error: {e}")
         sys.exit(1)
@@ -1130,7 +1130,7 @@ def main():
             logger.error("No data loaders created. Check data paths in config.")
             sys.exit(1)
             
-        logger.info("✓ Data loaders created successfully")
+        logger.info("  Data loaders created successfully")
         
     except Exception as e:
         logger.error(f"Data loading error: {e}")

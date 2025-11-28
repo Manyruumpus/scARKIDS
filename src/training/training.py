@@ -830,7 +830,7 @@ class TrainingManager:
                         }
                     )
                     loss_type = "validation" if val_metrics is not None else "training"
-                    logger.info(f"✓ New best model saved with {loss_type} loss: {self.training_core.best_loss:.6f}")
+                    logger.info(f"  New best model saved with {loss_type} loss: {self.training_core.best_loss:.6f}")
 
             logger.info("=" * 80)
             logger.info("Training completed successfully!")
@@ -955,7 +955,8 @@ class TrainingManager:
             'supervised': self.config.supervised,
             'total_epochs_trained': self.config.n_epochs,
             'best_loss': float(self.training_core.best_loss),
-            'final_learning_rate': self.training_core.optimizer.param_groups['lr'],
+            # 'final_learning_rate': self.training_core.optimizer.param_groups["lr"],
+            'final_learning_rate': [g["lr"] for g in self.training_core.optimizer.param_groups],
             'total_trainable_params': total_params,
         }
         

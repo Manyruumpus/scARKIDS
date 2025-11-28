@@ -284,6 +284,8 @@ class ConfigManager:
             KeyError: If module not found
             ValueError: If required parameters missing
         """
+        if module_name == "global":
+            return self.global_params
         if module_name not in MODULE_SCHEMAS:
             raise KeyError(f"Unknown module: {module_name}")
         
@@ -344,7 +346,7 @@ class ConfigManager:
         # Cross-module consistency checks
         self._validate_cross_module_consistency()
         
-        logger.info("✓ Configuration validation passed")
+        logger.info("  Configuration validation passed")
     
     def _validate_module_config(self, module_name: str, config: Dict[str, Any]) -> None:
         """Validate a single module configuration."""
